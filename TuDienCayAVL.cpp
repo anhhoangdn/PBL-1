@@ -15,6 +15,7 @@
 #define MAX_LENGTH 20
 #define TRUE 1
 #define FALSE 0
+#define MAX_INPUT_LEN 50
 
 // Các cấu trúc dữ liệu
 struct NODEVIDU {
@@ -119,6 +120,7 @@ int GoiYKyTu(const char* tuGoc, char* tuDoChu, int len);
 
 // Hàm phụ trợ
 void catChuoiNhap(char* str, int maxLen);
+int nhapChuoi(const char* prompt, char* dest, int maxLen, int offsetX, int offsetY, int y);
 
 int main() {
     setUTF8Console();
@@ -130,6 +132,14 @@ int main() {
         return 1;
     }
     setCursorVisibility(0);
+
+    int consoleWidth, consoleHeight;
+    getConsoleSize(&consoleWidth, &consoleHeight);
+    if (consoleWidth < 70 || consoleHeight < HIEN_THI_TOI_DA + 15) {
+        printf("Kích thước console quá nhỏ! Cần ít nhất 70x%d ký tự.\n", HIEN_THI_TOI_DA + 15);
+        free(tudien);
+        return 1;
+    }
 
     if (DocFile(tudien) == TRUE) {
         XuLyTuDien(tudien);
@@ -148,6 +158,18 @@ int main() {
 // Hàm phụ trợ
 void catChuoiNhap(char* str, int maxLen) {
     if (strlen(str) > maxLen) str[maxLen] = '\0';
+    str[maxLen] = '\0'; // Đảm bảo kết thúc bằng null
+}
+
+int nhapChuoi(const char* prompt, char* dest, int maxLen, int offsetX, int offsetY, int y) {
+    gotoxy(5 + offsetX, y + offsetY); printf("%s", prompt);
+    setCursorVisibility(1);
+    fgets(dest, maxLen, stdin);
+    dest[strcspn(dest, "\n")] = '\0';
+    setCursorVisibility(0);
+    if (strcmp(dest, "0") == 0) return 0;
+    catChuoiNhap(dest, maxLen - 1);
+    return 1;
 }
 
 // Các hàm xử lý giao diện
@@ -234,6 +256,7 @@ void ThemVaoLichSu(const char* tu) {
                 prev->next = current->next;
                 current->next = LichSuHead;
                 LichSuHead = current;
+                if (SoLuongLichSu < MAX_LICH_SU) SoLuongLichSu++;
             }
             return;
         }
@@ -363,24 +386,24 @@ void ChenVaoLengthList(NODEWORD* word) {
 NODEWORD* ChuyenDoi(const char* dong) {
     if (dong == NULL || dong[0] == '\0') return NULL;
 
-    // Đếm số dấu '-' để kiểm tra định dạng
     int dashCount = 0;
     for (int i = 0; dong[i]; i++) {
         if (dong[i] == '-') dashCount++;
     }
-    if (dashCount != 3) return NULL; // Định dạng không hợp lệ
+    if (dashCount != 3) return NULL;
 
     NODEWORD* p = (NODEWORD*)calloc(1, sizeof(NODEWORD));
     if (p == NULL) {
         printf("Lỗi cấp phát bộ nhớ!\n");
         return NULL;
     }
+    p->info.first = NULL; // Khởi tạo danh sách ví dụ
     p->height = 1;
 
     char tu[MAX_CHUOI] = "", loai[MAX_CHUOI] = "", phienam[MAX_CHUOI] = "", nghia[MAX_CHUOI] = "";
     int i = 0, pos = 0;
 
-    while (dong[i] && dong[i] != '-') tu[pos++] = dong[i++];
+    while (dong[i] && dong[i] != '-') tu[pos++] = tolower(dong[i++]);
     tu[pos] = '\0';
     if (i >= strlen(dong) || tu[0] == '\0') {
         free(p);
@@ -465,7 +488,7 @@ void GhiFile(hashtable* tudien) {
     FILE* fo = fopen("Final_Vocabulary.txt", "w");
     if (fo == NULL) {
         printf("Không thể mở file 'Final_Vocabulary.txt' để ghi!\n");
-        Sleep(2000);
+        Sleep(1000);
         return;
     }
     for (int i = 0; i < 26; i++) {
@@ -580,9 +603,9 @@ void VeGiaoDienChiTietTu(NODEWORD* p) {
     gotoxy(2 + offsetX, 4 + offsetY); setColor(10, 0); printf("%.*s", 66, p->info.tu); setColor(15, 0);
     gotoxy(2 + offsetX, 5 + offsetY); printf("%.*s", 66, p->info.phienam);
     gotoxy(2 + offsetX, 6 + offsetY); printf("------------------------------------------------------------------");
-    gotoxy(2 + offsetX, 7 + offsetY); printf("(%.*s): ", 10, p->info.loai);
+    gotoxy(2 + offsetX, 7 + offsetY); printf("(%.*s): ", 15, p->info.loai);
     setColor(13, 0);
-    int x = 12 + offsetX; // Vị trí bắt đầu của nghĩa
+    int x = 19 + offsetX;
     gotoxy(x, 7 + offsetY);
     for (int i = 0; p->info.nghia[i] && x < 68 + offsetX; i++) {
         printf("%c", p->info.nghia[i]);
@@ -595,9 +618,9 @@ void VeGiaoDienChiTietTu(NODEWORD* p) {
     gotoxy(2 + offsetX, y + offsetY); printf("Ví dụ:");
     while (v != NULL && y < 18) {
         gotoxy(2 + offsetX, ++y + offsetY); printf("- ");
-        x = 4 + offsetX; // Bắt đầu từ cột 4 (sau "- ")
+        x = 4 + offsetX;
         for (int i = 0; v->info[i] && y < 18; i++) {
-            if (x >= 58 + offsetX) { // Nếu vượt quá cột 58, xuống dòng
+            if (x >= 58 + offsetX) {
                 y++;
                 x = 4 + offsetX;
                 gotoxy(x, y + offsetY);
@@ -683,14 +706,13 @@ NODEWORD* XoaTuAVL(NODEWORD* root, const char* tu) {
             return temp;
         } else {
             NODEWORD* minNode = TimNhoNhat(root->right);
-            NODEVIDU* vd = root->info.first;
+            root->info.first = NULL;
+            NODEVIDU* vd = minNode->info.first;
             while (vd != NULL) {
-                NODEVIDU* tempVd = vd;
+                ChenVdVaoDauDs(&root->info.first, vd->info);
                 vd = vd->next;
-                free(tempVd);
             }
-            root->info.first = minNode->info.first;
-            minNode->info.first = NULL; // Ngăn giải phóng trùng
+            minNode->info.first = NULL;
             strcpy(root->info.tu, minNode->info.tu);
             strcpy(root->info.loai, minNode->info.loai);
             strcpy(root->info.phienam, minNode->info.phienam);
@@ -736,7 +758,7 @@ void XoaTu(hashtable* tudien, NODEWORD** p) {
     }
     *p = NULL;
     gotoxy(5 + offsetX, 4 + offsetY); setColor(10, 0); printf("Đã xóa thành công !"); setColor(15, 0);
-    Sleep(50000);
+    Sleep(1000);
     setCursorVisibility(0);
 }
 
@@ -753,58 +775,30 @@ void SuaTu(NODEWORD* p) {
     gotoxy(5 + offsetX, 3 + offsetY); printf("0: Quay Lại");
 
     char temp[MAX_CHUOI];
-    gotoxy(5 + offsetX, 5 + offsetY); printf("Loại từ (%s): ", p->info.loai);
-    setCursorVisibility(1);
-    fgets(temp, MAX_CHUOI, stdin);
-    temp[strcspn(temp, "\n")] = '\0';
-    setCursorVisibility(0);
-    if (strcmp(temp, "0") == 0) return;
-    if (temp[0] != '\0') {
-        catChuoiNhap(temp, 50);
-        strncpy(p->info.loai, temp, MAX_CHUOI - 1);
-    }
+    sprintf(temp, "Loại từ (%s): ", p->info.loai);
+    if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, 5)) return;
+    if (temp[0] != '\0') strncpy(p->info.loai, temp, MAX_CHUOI - 1);
 
-    gotoxy(5 + offsetX, 6 + offsetY); printf("Phiên âm (%s): ", p->info.phienam);
-    setCursorVisibility(1);
-    fgets(temp, MAX_CHUOI, stdin);
-    temp[strcspn(temp, "\n")] = '\0';
-    setCursorVisibility(0);
-    if (strcmp(temp, "0") == 0) return;
-    if (temp[0] != '\0') {
-        catChuoiNhap(temp, 50);
-        strncpy(p->info.phienam, temp, MAX_CHUOI - 1);
-    }
+    sprintf(temp, "Phiên âm (%s): ", p->info.phienam);
+    if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, 6)) return;
+    if (temp[0] != '\0') strncpy(p->info.phienam, temp, MAX_CHUOI - 1);
 
-    gotoxy(5 + offsetX, 7 + offsetY); printf("Nghĩa (%s): ", p->info.nghia);
-    setCursorVisibility(1);
-    fgets(temp, MAX_CHUOI, stdin);
-    temp[strcspn(temp, "\n")] = '\0';
-    setCursorVisibility(0);
-    if (strcmp(temp, "0") == 0) return;
-    if (temp[0] != '\0') {
-        catChuoiNhap(temp, 50);
-        strncpy(p->info.nghia, temp, MAX_CHUOI - 1);
-    }
+    sprintf(temp, "Nghĩa (%s): ", p->info.nghia);
+    if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, 7)) return;
+    if (temp[0] != '\0') strncpy(p->info.nghia, temp, MAX_CHUOI - 1);
 
     NODEVIDU* vd = p->info.first;
     int count = 1, y = 9;
     while (vd != NULL && y < 18) {
-        gotoxy(5 + offsetX, y + offsetY); printf("Ví dụ %d (%s): ", count++, vd->info);
-        setCursorVisibility(1);
-        fgets(temp, MAX_CHUOI, stdin);
-        temp[strcspn(temp, "\n")] = '\0';
-        setCursorVisibility(0);
-        if (strcmp(temp, "0") == 0) return;
-        if (temp[0] != '\0') {
-            catChuoiNhap(temp, 50);
-            strncpy(vd->info, temp, MAX_CHUOI - 1);
-        }
+        sprintf(temp, "Ví dụ %d (%s): ", count++, vd->info);
+        if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, y)) return;
+        if (temp[0] != '\0') strncpy(vd->info, temp, MAX_CHUOI - 1);
         vd = vd->next;
         y++;
     }
 
     gotoxy(5 + offsetX, y + offsetY); setColor(10, 0); printf("Đã thay đổi !"); setColor(15, 0);
-    Sleep(500);
+    Sleep(1000);
     setCursorVisibility(0);
 }
 
@@ -816,6 +810,7 @@ void ThemTuMoi(hashtable* tudien) {
         Sleep(1000);
         return;
     }
+    p->info.first = NULL;
     p->height = 1;
 
     clearScreen();
@@ -829,18 +824,11 @@ void ThemTuMoi(hashtable* tudien) {
     gotoxy(5 + offsetX, 3 + offsetY); printf("0: Quay Lại");
 
     char temp[MAX_CHUOI];
-    gotoxy(5 + offsetX, 5 + offsetY); printf("Nhập Từ: ");
-    setCursorVisibility(1);
-    fgets(temp, MAX_CHUOI, stdin);
-    temp[strcspn(temp, "\n")] = '\0';
-    setCursorVisibility(0);
-    if (strcmp(temp, "0") == 0 || temp[0] == '\0') {
+    if (!nhapChuoi("Nhập Từ: ", temp, MAX_CHUOI, offsetX, offsetY, 5) || temp[0] == '\0') {
         free(p);
         return;
     }
-    // Chuẩn hóa từ thành chữ thường
     for (int i = 0; temp[i]; i++) temp[i] = tolower(temp[i]);
-    // Kiểm tra từ hợp lệ (chỉ chứa chữ cái)
     for (int i = 0; temp[i]; i++) {
         if (!isalpha(temp[i])) {
             gotoxy(5 + offsetX, 6 + offsetY); setColor(12, 0); printf("Từ chỉ được chứa chữ cái!");
@@ -857,66 +845,40 @@ void ThemTuMoi(hashtable* tudien) {
         free(p);
         return;
     }
-    catChuoiNhap(temp, 50);
     strncpy(p->info.tu, temp, MAX_CHUOI - 1);
 
-    gotoxy(5 + offsetX, 7 + offsetY); printf("Loại từ: ");
-    setCursorVisibility(1);
-    fgets(temp, MAX_CHUOI, stdin);
-    temp[strcspn(temp, "\n")] = '\0';
-    setCursorVisibility(0);
-    if (strcmp(temp, "0") == 0) {
+    if (!nhapChuoi("Loại từ: ", temp, MAX_CHUOI, offsetX, offsetY, 7)) {
         free(p);
         return;
     }
-    catChuoiNhap(temp, 50);
     strncpy(p->info.loai, (temp[0] != '\0') ? temp : "Trống", MAX_CHUOI - 1);
 
-    gotoxy(5 + offsetX, 8 + offsetY); printf("Phiên âm: ");
-    setCursorVisibility(1);
-    fgets(temp, MAX_CHUOI, stdin);
-    temp[strcspn(temp, "\n")] = '\0';
-    setCursorVisibility(0);
-    if (strcmp(temp, "0") == 0) {
+    if (!nhapChuoi("Phiên âm: ", temp, MAX_CHUOI, offsetX, offsetY, 8)) {
         free(p);
         return;
     }
-    catChuoiNhap(temp, 50);
     strncpy(p->info.phienam, (temp[0] != '\0') ? temp : "Trống", MAX_CHUOI - 1);
 
-    gotoxy(5 + offsetX, 9 + offsetY); printf("Nghĩa: ");
-    setCursorVisibility(1);
-    fgets(temp, MAX_CHUOI, stdin);
-    temp[strcspn(temp, "\n")] = '\0';
-    setCursorVisibility(0);
-    if (strcmp(temp, "0") == 0) {
+    if (!nhapChuoi("Nghĩa: ", temp, MAX_CHUOI, offsetX, offsetY, 9)) {
         free(p);
         return;
     }
-    catChuoiNhap(temp, 50);
     strncpy(p->info.nghia, (temp[0] != '\0') ? temp : "Trống", MAX_CHUOI - 1);
 
     int count = 1, y = 11;
     while (count <= 2) {
-        gotoxy(5 + offsetX, y + offsetY); printf("Ví dụ %d: ", count++);
-        setCursorVisibility(1);
-        fgets(temp, MAX_CHUOI, stdin);
-        temp[strcspn(temp, "\n")] = '\0';
-        setCursorVisibility(0);
-        if (strcmp(temp, "0") == 0) {
+        sprintf(temp, "Ví dụ %d: ", count++);
+        if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, y)) {
             free(p);
             return;
         }
-        if (temp[0] != '\0') {
-            catChuoiNhap(temp, 50);
-            ChenVdVaoDauDs(&p->info.first, temp);
-        }
+        if (temp[0] != '\0') ChenVdVaoDauDs(&p->info.first, temp);
         y++;
     }
     int index = TapTuDien(p->info.tu);
     tudien[index].root = ChenVaoAVL(tudien[index].root, p);
     ChenVaoLengthList(p);
-    GhiFile(tudien); // Lưu ngay sau khi thêm từ
+    GhiFile(tudien);
     gotoxy(5 + offsetX, y + offsetY); setColor(10, 0);
     printf("Đã thêm từ '%.40s' thành công !", p->info.tu);
     setColor(15, 0);
@@ -987,6 +949,7 @@ int GoiYKyTu(const char* tuGoc, char* tuDoChu, int len) {
     return 1;
 }
 
+
 void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
     if (tudien == NULL || diemSo == NULL) return;
     int consoleWidth, consoleHeight;
@@ -1011,7 +974,7 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
         if (tuGoc == NULL) {
             gotoxy(5 + offsetX, 8 + offsetY); setColor(12, 0); printf("  Không có từ phù hợp !");
             setColor(15, 0);
-            gotoxy(5 + offsetX, 10 + offsetY); printf("  Nhấn phím bất kì để quay lại...");
+            gotoxy(5 + offsetX, 10 + offsetY); printf("  Nhấn phím bất kỳ để quay lại...");
             _getch();
             return;
         }
@@ -1092,13 +1055,26 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
             }
 
             if (KyTuNguoiChoi == 13) { // Enter
-                if (strcmp(tuDoChu, tuGoc->info.tu) == 0) {
-                    *diemSo += (doKho == 1 ? 10 : 20);
-                    gotoxy(5 + offsetX, 11 + offsetY); setColor(10, 0); printf("  Chính xác! Từ '%s' thích hợp!", tuDoChu);
-                    gotoxy(5 + offsetX, 12 + offsetY); printf("  + %d điểm", (doKho == 1 ? 10 : 20));
-                    Sleep(500);
+                if (strchr(tuDoChu, '_') != NULL) {
+                    gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Vui lòng điền hết các ký tự!");
                     setColor(15, 0);
-                    VeGiaoDienChiTietTu(tuGoc);
+                    Sleep(1000);
+                    gotoxy(5 + offsetX, 11 + offsetY); printf("  %-40s", "");
+                    continue;
+                }
+                NODEWORD* p = NULL;
+                if (strcmp(tuDoChu, tuGoc->info.tu) == 0) {
+                    p = tuGoc;
+                } else {
+                    p = TimKiem(tudien, tuDoChu);
+                }
+                if (p != NULL && strcmp(tuDoChu, p->info.tu) == 0) {
+                    *diemSo += (doKho == 1 ? 10 : 20);
+                    gotoxy(5 + offsetX, 11 + offsetY); setColor(10, 0); printf("  Chính xác! Từ '%s' thích hợp!", p->info.tu);
+                    gotoxy(5 + offsetX, 12 + offsetY); printf("  + %d điểm", (doKho == 1 ? 10 : 20));
+                    Sleep(1000);
+                    setColor(15, 0);
+                    VeGiaoDienChiTietTu(p);
                     gotoxy(5 + offsetX, 14 + offsetY); setColor(15, 0); printf("  Nhấn phím bất kỳ để tiếp tục...");
                     _getch();
                     roundOver = 1;
@@ -1107,7 +1083,7 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
                     soLanDoanSaiTong++;
                     if (soLanDoanSaiTong >= MAX_DOAN_SAI) {
                         gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Bạn đã thua! Từ đúng là: %s", tuGoc->info.tu);
-                        Sleep(500);
+                        Sleep(1000);
                         setColor(15, 0);
                         VeGiaoDienChiTietTu(tuGoc);
                         gotoxy(5 + offsetX, 13 + offsetY); setColor(15, 0); printf("  Nhấn phím bất kỳ để tiếp tục...");
@@ -1116,7 +1092,7 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
                         continue;
                     } else {
                         gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Sai rồi! Từ đúng là: %s", tuGoc->info.tu);
-                        Sleep(500);
+                        Sleep(1000);
                         setColor(15, 0);
                         VeGiaoDienChiTietTu(tuGoc);
                         gotoxy(5 + offsetX, 13 + offsetY); setColor(15, 0); printf("  Nhấn phím bất kỳ để tiếp tục...");
@@ -1130,7 +1106,7 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
             if (!isalpha(KyTuNguoiChoi)) {
                 gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Vui lòng nhập chữ cái !");
                 setColor(15, 0);
-                Sleep(500);
+                Sleep(1000);
                 gotoxy(5 + offsetX, 11 + offsetY); printf("  %-40s", "");
                 continue;
             }
@@ -1144,14 +1120,13 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
             }
 
             int filled = 0;
-            for (int i = 0; i < len && !filled; i++) {
-                if (tuDoChu[i] == '_') {
-                    tuDoChu[i] = tolower(KyTuNguoiChoi);
-                    hiddenCount--;
-                    filled = 1;
-                }
-            }
-
+			for (int i = 0; i < len && !filled; i++) {
+    			if (tuDoChu[i] == '_') {
+        			tuDoChu[i] = tolower(KyTuNguoiChoi);
+        			hiddenCount--;
+        			filled = 1;
+   				}
+			}
             gotoxy(5 + offsetX, 7 + offsetY); printf("  Từ: %s%-40s", tuDoChu, "");
             gotoxy(5 + offsetX, 9 + offsetY); printf("  (1: Gợi ý | Backspace: Xóa | 0: Kết Thúc)");
         }
@@ -1263,7 +1238,7 @@ void XuLyTuDien(hashtable* tudien) {
         case 27: // Esc
             gotoxy(2 + offsetX, 24 + offsetY); setColor(14, 0); printf("Đang lưu..."); setColor(15, 0);
             GhiFile(tudien);
-            Sleep(500);
+            Sleep(1000);
             gotoxy(2 + offsetX, 24 + offsetY); setColor(10, 0);
             printf("%s", "Đã lưu thành công!"); setColor(15, 0);
             return;
@@ -1329,6 +1304,7 @@ void CleanUp(hashtable* tudien) {
         while (curr != NULL) {
             LENGTHNODE* temp = curr;
             curr = curr->next;
+            temp->word = NULL;
             free(temp);
         }
         lengthLists[i] = NULL;
