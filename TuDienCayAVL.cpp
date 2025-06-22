@@ -12,7 +12,7 @@
 #define MAX_LICH_SU 18
 #define MAX_CHUOI 200
 #define MAX_DOAN_SAI 3
-#define MAX_LENGTH 20
+#define MAX_CHIEUDAI 20
 #define TRUE 1
 #define FALSE 0
 #define MAX_INPUT_LEN 50
@@ -64,7 +64,7 @@ char TEN_UNG_DUNG[] = "Chương Trình Học Tiếng Anh";
 NODELICHSU* LichSuHead = NULL;
 int SoLuongLichSu = 0;
 int diemSo = 0;
-LENGTHNODE* lengthLists[MAX_LENGTH + 1] = { NULL };
+LENGTHNODE* lengthLists[MAX_CHIEUDAI + 1] = { NULL };
 
 // Các hàm xử lý giao diện
 void setUTF8Console();
@@ -74,6 +74,7 @@ void setCursorVisibility(int visible);
 void clearScreen();
 void getConsoleSize(int* width, int* height);
 void veKhung(int x, int y, int width, int height, short color, int offsetX, int offsetY);
+void VeGiaoDienBatDau();
 void VeGiaoDienChinh(hashtable* tudien, char* input, int pos, int dieukien);
 void VeGiaoDienChiTietTu(NODEWORD* p);
 
@@ -127,25 +128,18 @@ int main() {
     srand((unsigned int)time(NULL));
 
     hashtable* tudien = (hashtable*)calloc(26, sizeof(hashtable));
-    if (tudien == NULL) {
+    if(tudien == NULL) {
         printf("Lỗi cấp phát bộ nhớ!\n");
         return 1;
     }
     setCursorVisibility(0);
 
-    int consoleWidth, consoleHeight;
-    getConsoleSize(&consoleWidth, &consoleHeight);
-    if (consoleWidth < 70 || consoleHeight < HIEN_THI_TOI_DA + 15) {
-        printf("Kích thước console quá nhỏ! Cần ít nhất 70x%d ký tự.\n", HIEN_THI_TOI_DA + 15);
-        free(tudien);
-        return 1;
-    }
-
-    if (DocFile(tudien) == TRUE) {
+    if(DocFile(tudien) == TRUE) {
         XuLyTuDien(tudien);
         GhiFile(tudien);
         CleanUp(tudien);
-    } else {
+    } 
+	else {
         printf("Không thể mở file 'Final_Vocabulary.txt'! Vui lòng kiểm tra lại.\n");
         Sleep(2000);
     }
@@ -157,8 +151,8 @@ int main() {
 
 // Hàm phụ trợ
 void catChuoiNhap(char* str, int maxLen) {
-    if (strlen(str) > maxLen) str[maxLen] = '\0';
-    str[maxLen] = '\0'; // Đảm bảo kết thúc bằng null
+    if(strlen(str) > maxLen) str[maxLen] = '\0';
+    str[maxLen] = '\0'; // Đảm bảo kết thúc chuỗi bằng null
 }
 
 int nhapChuoi(const char* prompt, char* dest, int maxLen, int offsetX, int offsetY, int y) {
@@ -216,10 +210,10 @@ void veKhung(int x, int y, int width, int height, short color, int offsetX, int 
 
     gotoxy(x, y);
     printf("╔");
-    for (int i = 0; i < width - 2; i++) printf("═");
+    for(int i = 0; i < width - 2; i++) printf("═");
     printf("╗");
 
-    for (int i = 1; i < height - 1; i++) {
+    for(int i = 1; i < height - 1; i++) {
         gotoxy(x, y + i);
         printf("║");
         gotoxy(x + width - 1, y + i);
@@ -228,14 +222,14 @@ void veKhung(int x, int y, int width, int height, short color, int offsetX, int 
 
     gotoxy(x, y + height - 1);
     printf("╚");
-    for (int i = 0; i < width - 2; i++) printf("═");
+    for(int i = 0; i < width - 2; i++) printf("═");
     printf("╝");
 }
 
 void ChenVdVaoDauDs(NODEVIDU** first, const char* vidu) {
-    if (vidu == NULL || vidu[0] == '\0') return;
+    if(vidu == NULL || vidu[0] == '\0') return;
     NODEVIDU* p = (NODEVIDU*)malloc(sizeof(NODEVIDU));
-    if (p == NULL) {
+    if(p == NULL) {
         printf("Lỗi cấp phát bộ nhớ!\n");
         return;
     }
@@ -246,17 +240,16 @@ void ChenVdVaoDauDs(NODEVIDU** first, const char* vidu) {
 }
 
 void ThemVaoLichSu(const char* tu) {
-    if (tu == NULL || tu[0] == '\0') return;
+    if(tu == NULL || tu[0] == '\0') return;
 
     NODELICHSU* current = LichSuHead;
     NODELICHSU* prev = NULL;
-    while (current != NULL) {
-        if (strcmp(current->tu, tu) == 0) {
-            if (prev != NULL) {
+    while(current != NULL) {
+        if(strcmp(current->tu, tu) == 0) {
+            if(prev != NULL) {
                 prev->next = current->next;
                 current->next = LichSuHead;
                 LichSuHead = current;
-                if (SoLuongLichSu < MAX_LICH_SU) SoLuongLichSu++;
             }
             return;
         }
@@ -265,19 +258,19 @@ void ThemVaoLichSu(const char* tu) {
     }
 
     NODELICHSU* newNode = (NODELICHSU*)malloc(sizeof(NODELICHSU));
-    if (newNode == NULL) return;
+    if(newNode == NULL) return;
     strncpy(newNode->tu, tu, MAX_CHUOI - 1);
     newNode->tu[MAX_CHUOI - 1] = '\0';
     newNode->next = NULL;
 
-    if (SoLuongLichSu == MAX_LICH_SU) {
+    if(SoLuongLichSu == MAX_LICH_SU) {
         NODELICHSU* last = LichSuHead;
         NODELICHSU* secondLast = NULL;
-        while (last->next != NULL) {
+        while(last->next != NULL) {
             secondLast = last;
             last = last->next;
         }
-        if (secondLast) secondLast->next = NULL;
+        if(secondLast != NULL) secondLast->next = NULL;
         free(last);
         SoLuongLichSu--;
     }
@@ -288,30 +281,33 @@ void ThemVaoLichSu(const char* tu) {
 }
 
 int TapTuDien(const char* p) {
-    if (p == NULL || p[0] == '\0') return 0;
+    if(p == NULL || p[0] == '\0') return 0;
     char c = tolower(p[0]);
     return (c >= 'a' && c <= 'z') ? (c - 'a') : 0;
 }
 
 // Các hàm hỗ trợ cây AVL
 int GetHeight(NODEWORD* node) {
-    return node ? node->height : 0;
+	if(node == NULL) return 0;
+    return node->height;
 }
 
 int GetBalance(NODEWORD* node) {
-    return node ? GetHeight(node->left) - GetHeight(node->right) : 0;
+	if(node == NULL) return 0;
+    return GetHeight(node->left) - GetHeight(node->right);
 }
 
 int max(int a, int b) {
-    return a > b ? a : b;
+	if(a > b) return a;
+    return b;
 }
 
 void updateHeight(NODEWORD* node) {
-    if (node) node->height = 1 + max(GetHeight(node->left), GetHeight(node->right));
+    if(node != NULL) node->height = 1 + max(GetHeight(node->left), GetHeight(node->right));
 }
 
 NODEWORD* RotateRight(NODEWORD* x) {
-    if (!x || !x->left) return x;
+    if(x == NULL || x->left == NULL) return x;
     NODEWORD* y = x->left;
     NODEWORD* T2 = y->right;
     y->right = x;
@@ -322,7 +318,7 @@ NODEWORD* RotateRight(NODEWORD* x) {
 }
 
 NODEWORD* RotateLeft(NODEWORD* x) {
-    if (!x || !x->right) return x;
+    if(x == NULL || x->right == NULL) return x;
     NODEWORD* y = x->right;
     NODEWORD* T2 = y->left;
     y->left = x;
@@ -333,16 +329,17 @@ NODEWORD* RotateLeft(NODEWORD* x) {
 }
 
 NODEWORD* BalanceNode(NODEWORD* node) {
-    if (!node) return node;
+    if(node == NULL) 
+		return node;
     int balance = GetBalance(node);
-    if (balance > 1) {
-        if (GetBalance(node->left) < 0) {
+    if(balance > 1) {
+        if(GetBalance(node->left) < 0) {
             node->left = RotateLeft(node->left);
         }
         return RotateRight(node);
     }
-    if (balance < -1) {
-        if (GetBalance(node->right) > 0) {
+    if(balance < -1) {
+        if(GetBalance(node->right) > 0) {
             node->right = RotateRight(node->right);
         }
         return RotateLeft(node);
@@ -351,19 +348,21 @@ NODEWORD* BalanceNode(NODEWORD* node) {
 }
 
 NODEWORD* ChenVaoAVL(NODEWORD* root, NODEWORD* p) {
-    if (p == NULL) return root;
-    if (root == NULL) {
+    if(p == NULL) return root;
+    if(root == NULL) {
         p->left = p->right = NULL;
         p->height = 1;
         return p;
     }
 
     int cmp = strcmp(p->info.tu, root->info.tu);
-    if (cmp < 0) {
+    if(cmp < 0) {
         root->left = ChenVaoAVL(root->left, p);
-    } else if (cmp > 0) {
+    } 
+	else if(cmp > 0) {
         root->right = ChenVaoAVL(root->right, p);
-    } else {
+    } 
+	else {
         free(p);
         return root;
     }
@@ -373,27 +372,29 @@ NODEWORD* ChenVaoAVL(NODEWORD* root, NODEWORD* p) {
 }
 
 void ChenVaoLengthList(NODEWORD* word) {
-    if (word == NULL) return;
+    if(word == NULL) 
+		return;
     int len = strlen(word->info.tu);
-    if (len > MAX_LENGTH) len = MAX_LENGTH;
+    if(len > MAX_CHIEUDAI) len = MAX_CHIEUDAI;
     LENGTHNODE* newNode = (LENGTHNODE*)malloc(sizeof(LENGTHNODE));
-    if (newNode == NULL) return;
+    if(newNode == NULL) 
+		return;
     newNode->word = word;
     newNode->next = lengthLists[len];
     lengthLists[len] = newNode;
 }
 
 NODEWORD* ChuyenDoi(const char* dong) {
-    if (dong == NULL || dong[0] == '\0') return NULL;
+    if(dong == NULL || dong[0] == '\0') return NULL;
 
     int dashCount = 0;
-    for (int i = 0; dong[i]; i++) {
+    for(int i = 0; dong[i]; i++) {
         if (dong[i] == '-') dashCount++;
     }
-    if (dashCount != 3) return NULL;
+    if(dashCount != 3) return NULL;
 
     NODEWORD* p = (NODEWORD*)calloc(1, sizeof(NODEWORD));
-    if (p == NULL) {
+    if(p == NULL) {
         printf("Lỗi cấp phát bộ nhớ!\n");
         return NULL;
     }
@@ -403,9 +404,9 @@ NODEWORD* ChuyenDoi(const char* dong) {
     char tu[MAX_CHUOI] = "", loai[MAX_CHUOI] = "", phienam[MAX_CHUOI] = "", nghia[MAX_CHUOI] = "";
     int i = 0, pos = 0;
 
-    while (dong[i] && dong[i] != '-') tu[pos++] = tolower(dong[i++]);
+    while(dong[i] && dong[i] != '-') tu[pos++] = tolower(dong[i++]);
     tu[pos] = '\0';
-    if (i >= strlen(dong) || tu[0] == '\0') {
+    if(i >= strlen(dong) || tu[0] == '\0') {
         free(p);
         return NULL;
     }
@@ -413,9 +414,9 @@ NODEWORD* ChuyenDoi(const char* dong) {
     i++;
     pos = 0;
 
-    while (dong[i] && dong[i] != '-') loai[pos++] = dong[i++];
+    while(dong[i] && dong[i] != '-') loai[pos++] = dong[i++];
     loai[pos] = '\0';
-    if (i >= strlen(dong)) {
+    if(i >= strlen(dong)) {
         free(p);
         return NULL;
     }
@@ -423,9 +424,9 @@ NODEWORD* ChuyenDoi(const char* dong) {
     i++;
     pos = 0;
 
-    while (dong[i] && dong[i] != '-') phienam[pos++] = dong[i++];
+    while(dong[i] && dong[i] != '-') phienam[pos++] = dong[i++];
     phienam[pos] = '\0';
-    if (i >= strlen(dong)) {
+    if(i >= strlen(dong)) {
         free(p);
         return NULL;
     }
@@ -433,7 +434,7 @@ NODEWORD* ChuyenDoi(const char* dong) {
     i++;
     pos = 0;
 
-    while (dong[i]) nghia[pos++] = dong[i++];
+    while(dong[i]) nghia[pos++] = dong[i++];
     nghia[pos] = '\0';
     strncpy(p->info.nghia, nghia, MAX_CHUOI - 1);
 
@@ -442,23 +443,23 @@ NODEWORD* ChuyenDoi(const char* dong) {
 
 int DocFile(hashtable* tudien) {
     FILE* fi = fopen("Final_Vocabulary.txt", "r");
-    if (fi == NULL) {
+    if(fi == NULL) {
         printf("Không thể mở file 'Final_Vocabulary.txt' để đọc!\n");
         return FALSE;
     }
 
     char dong[MAX_CHUOI];
-    while (fgets(dong, MAX_CHUOI, fi)) {
+    while(fgets(dong, MAX_CHUOI, fi)) {
         dong[strcspn(dong, "\n")] = '\0';
-        if (dong[0] == '\0') continue;
+        if(dong[0] == '\0') continue;
 
         NODEWORD* p = ChuyenDoi(dong);
-        if (p == NULL) continue;
+        if(p == NULL) continue;
 
         int viduCount = 0;
-        while (viduCount < 2 && fgets(dong, MAX_CHUOI, fi)) {
+        while(viduCount < 2 && fgets(dong, MAX_CHUOI, fi)) {
             dong[strcspn(dong, "\n")] = '\0';
-            if (dong[0] != '\0') {
+            if(dong[0] != '\0') {
                 ChenVdVaoDauDs(&p->info.first, dong);
                 viduCount++;
             }
@@ -473,11 +474,11 @@ int DocFile(hashtable* tudien) {
 }
 
 void GhiAVLVaoFile(FILE* fo, NODEWORD* root) {
-    if (root == NULL) return;
+    if(root == NULL) return;
     GhiAVLVaoFile(fo, root->left);
     fprintf(fo, "%s-%s-%s-%s\n", root->info.tu, root->info.loai, root->info.phienam, root->info.nghia);
     NODEVIDU* vd = root->info.first;
-    while (vd != NULL) {
+    while(vd != NULL) {
         fprintf(fo, "%s\n", vd->info);
         vd = vd->next;
     }
@@ -486,43 +487,43 @@ void GhiAVLVaoFile(FILE* fo, NODEWORD* root) {
 
 void GhiFile(hashtable* tudien) {
     FILE* fo = fopen("Final_Vocabulary.txt", "w");
-    if (fo == NULL) {
+    if(fo == NULL) {
         printf("Không thể mở file 'Final_Vocabulary.txt' để ghi!\n");
         Sleep(1000);
         return;
     }
-    for (int i = 0; i < 26; i++) {
+    for(int i = 0; i < 26; i++) {
         GhiAVLVaoFile(fo, tudien[i].root);
     }
     fclose(fo);
-    printf("Đã lưu từ điển vào Final_Vocabulary.txt\n");
 }
 
 NODEWORD* TimKiemAVL(NODEWORD* root, const char* input) {
-    if (root == NULL || input == NULL || input[0] == '\0') return NULL;
+    if(root == NULL || input == NULL || input[0] == '\0') return NULL;
     int cmp = strcmp(input, root->info.tu);
-    if (cmp == 0) return root;
-    if (cmp < 0) return TimKiemAVL(root->left, input);
+    if(cmp == 0) return root;
+    if(cmp < 0) return TimKiemAVL(root->left, input);
     return TimKiemAVL(root->right, input);
 }
 
 NODEWORD* TimKiem(hashtable* tudien, const char* input) {
-    if (tudien == NULL || input == NULL) return NULL;
+    if(tudien == NULL || input == NULL) return NULL;
     int index = TapTuDien(input);
     return TimKiemAVL(tudien[index].root, input);
 }
 
 void CapNhatDanhSachTuAVL(NODEWORD* root, const char* input, int* pos, int* count, NODEWORD** tuHienTai, int offsetX, int offsetY) {
-    if (root == NULL || *count >= HIEN_THI_TOI_DA) return;
+    if(root == NULL || *count >= HIEN_THI_TOI_DA) return;
     CapNhatDanhSachTuAVL(root->left, input, pos, count, tuHienTai, offsetX, offsetY);
-    if (*count >= HIEN_THI_TOI_DA) return;
+    if(*count >= HIEN_THI_TOI_DA) return;
 
-    if (input[0] == '\0' || strncmp(root->info.tu, input, strlen(input)) == 0) {
-        if (*pos <= 0) {
-            if (*count == 0) {
+    if(input[0] == '\0' || strncmp(root->info.tu, input, strlen(input)) == 0) {
+        if(*pos <= 0) {
+            if(*count == 0) {
                 *tuHienTai = root;
                 setColor(12, 7);
-            } else {
+            } 
+			else {
                 setColor(15, 0);
             }
             gotoxy(4 + offsetX, 9 + offsetY + *count);
@@ -535,24 +536,24 @@ void CapNhatDanhSachTuAVL(NODEWORD* root, const char* input, int* pos, int* coun
 }
 
 NODEWORD* CapNhatDanhSachTu(hashtable* tudien, char* input, int pos, int offsetX, int offsetY) {
-    if (tudien == NULL) return NULL;
+    if(tudien == NULL) return NULL;
     gotoxy(4 + offsetX, 9 + offsetY);
     int count = 0;
     NODEWORD* tuHienTai = NULL;
-    int tempPos = pos;
+    //int tempPos = pos;
 
-    for (int i = 0; i < 26 && count < HIEN_THI_TOI_DA; i++) {
-        CapNhatDanhSachTuAVL(tudien[i].root, input, &tempPos, &count, &tuHienTai, offsetX, offsetY);
+    for(int i = 0; i < 26 && count < HIEN_THI_TOI_DA; i++) {
+        CapNhatDanhSachTuAVL(tudien[i].root, input, &pos, &count, &tuHienTai, offsetX, offsetY);
     }
 
-    if (count == 0 && input[0] != '\0') {
+    if(count == 0 && input[0] != '\0') {
         gotoxy(4 + offsetX, 9 + offsetY);
         setColor(12, 0);
         printf("%-60s\n", "Không tìm thấy từ!");
         setColor(15, 0);
         count++;
     }
-    while (count < HIEN_THI_TOI_DA) {
+    while(count < HIEN_THI_TOI_DA) {
         gotoxy(4 + offsetX, 9 + offsetY + count);
         setColor(15, 0);
         printf("%-50s\n", "");
@@ -564,6 +565,38 @@ NODEWORD* CapNhatDanhSachTu(hashtable* tudien, char* input, int pos, int offsetX
     return tuHienTai;
 }
 
+void VeGiaoDienBatDau() {
+	int consoleWidth, consoleHeight;
+    getConsoleSize(&consoleWidth, &consoleHeight);
+
+    int offsetX = (consoleWidth - 70) / 2;
+    int offsetY = (consoleHeight - (HIEN_THI_TOI_DA + 15)) / 2;
+    
+    veKhung(0, 0, 66, 7, 14, offsetX, offsetY);
+    gotoxy(18 + offsetX, 2 + offsetY); setColor(15, 1);
+    printf("PBL1: DỰ ÁN LẬP TRÌNH TÍNH TOÁN");
+    
+    gotoxy(17 + offsetX, 4 + offsetY); setColor(15, 5);
+    printf("ĐỀ TÀI: CHƯƠNG TRÌNH HỌC TIẾNG ANH");
+    
+    veKhung(0, 7, 66, 9, 14, offsetX, offsetY);
+    gotoxy(23 + offsetX, 8 + offsetY); setColor(15, 2);
+    printf("Sinh viên thực hiện:");
+    
+    gotoxy(7 + offsetX, 10 + offsetY); setColor(15, 0);
+    printf("Nguyễn Anh Hoàng      24T_KHDL     MSSV: 102240246");
+    
+    gotoxy(7 + offsetX, 11 + offsetY); setColor(15, 0);
+    printf("Phan Tấn Sơn          24T_KHDL     MSSV: 102240273");
+    
+    gotoxy(12 + offsetX, 13 + offsetY); setColor(3, 0);
+    printf("Giảng viên hướng dẫn: TS. Trương Ngọc Châu");
+    
+    veKhung(0, 16, 66, 3, 14, offsetX, offsetY);
+	gotoxy(19 + offsetX, 17 + offsetY); setColor(2, 0);
+    printf("Nhấn phím bất kỳ để tiếp tục"); 
+}
+
 void VeGiaoDienChinh(hashtable* tudien, char* input, int pos, int dieukien) {
     int consoleWidth, consoleHeight;
     getConsoleSize(&consoleWidth, &consoleHeight);
@@ -571,7 +604,7 @@ void VeGiaoDienChinh(hashtable* tudien, char* input, int pos, int dieukien) {
     int offsetX = (consoleWidth - 70) / 2;
     int offsetY = (consoleHeight - (HIEN_THI_TOI_DA + 15)) / 2;
 
-    if (dieukien == 1) {
+    if(dieukien == 1) {
         clearScreen();
         veKhung(0, 0, 70, 3, 11, offsetX, offsetY);
         gotoxy(20 + offsetX, 1 + offsetY); setColor(15, 11); printf(" %s ", TEN_UNG_DUNG); setColor(15, 0);
@@ -589,7 +622,7 @@ void VeGiaoDienChinh(hashtable* tudien, char* input, int pos, int dieukien) {
 }
 
 void VeGiaoDienChiTietTu(NODEWORD* p) {
-    if (p == NULL) return;
+    if(p == NULL) return;
     clearScreen();
     int consoleWidth, consoleHeight;
     getConsoleSize(&consoleWidth, &consoleHeight);
@@ -607,7 +640,7 @@ void VeGiaoDienChiTietTu(NODEWORD* p) {
     setColor(13, 0);
     int x = 19 + offsetX;
     gotoxy(x, 7 + offsetY);
-    for (int i = 0; p->info.nghia[i] && x < 68 + offsetX; i++) {
+    for(int i = 0; p->info.nghia[i] && x < 68 + offsetX; i++) {
         printf("%c", p->info.nghia[i]);
         x++;
     }
@@ -616,10 +649,10 @@ void VeGiaoDienChiTietTu(NODEWORD* p) {
     NODEVIDU* v = p->info.first;
     int y = 9;
     gotoxy(2 + offsetX, y + offsetY); printf("Ví dụ:");
-    while (v != NULL && y < 18) {
+    while(v != NULL && y < 18) {
         gotoxy(2 + offsetX, ++y + offsetY); printf("- ");
         x = 4 + offsetX;
-        for (int i = 0; v->info[i] && y < 18; i++) {
+        for(int i = 0; v->info[i] && y < 18; i++) {
             if (x >= 58 + offsetX) {
                 y++;
                 x = 4 + offsetX;
@@ -636,79 +669,83 @@ void VeGiaoDienChiTietTu(NODEWORD* p) {
 }
 
 void DemSoTuAVL(NODEWORD* root, int* count) {
-    if (root == NULL) return;
+    if(root == NULL) return;
     (*count)++;
     DemSoTuAVL(root->left, count);
     DemSoTuAVL(root->right, count);
 }
 
 int DemSoTu(hashtable* tudien) {
-    if (tudien == NULL) return 0;
+    if(tudien == NULL) return 0;
     int count = 0;
-    for (int i = 0; i < 26; i++) {
+    for(int i = 0; i < 26; i++) {
         DemSoTuAVL(tudien[i].root, &count);
     }
     return count;
 }
 
 void DemSoTuHienThiAVL(NODEWORD* root, const char* input, int* count) {
-    if (root == NULL) return;
+    if(root == NULL) return;
     DemSoTuHienThiAVL(root->left, input, count);
-    if (input[0] == '\0' || strncmp(root->info.tu, input, strlen(input)) == 0) {
+    if(input[0] == '\0' || strncmp(root->info.tu, input, strlen(input)) == 0) {
         (*count)++;
     }
     DemSoTuHienThiAVL(root->right, input, count);
 }
 
 int DemSoTuHienThi(hashtable* tudien, const char* input) {
-    if (tudien == NULL || input == NULL) return 0;
+    if(tudien == NULL || input == NULL) return 0;
     int count = 0;
-    for (int i = 0; i < 26; i++) {
+    for(int i = 0; i < 26; i++) {
         DemSoTuHienThiAVL(tudien[i].root, input, &count);
     }
     return count;
 }
 
 NODEWORD* TimNhoNhat(NODEWORD* root) {
-    if (root == NULL) return NULL;
-    while (root->left != NULL) root = root->left;
+    if(root == NULL) return NULL;
+    while(root->left != NULL) root = root->left;
     return root;
 }
 
 NODEWORD* XoaTuAVL(NODEWORD* root, const char* tu) {
-    if (root == NULL || tu == NULL) return NULL;
+    if(root == NULL || tu == NULL) return NULL;
 
     int cmp = strcmp(tu, root->info.tu);
-    if (cmp < 0) {
+    if(cmp < 0) {
         root->left = XoaTuAVL(root->left, tu);
-    } else if (cmp > 0) {
+    }
+	else if(cmp > 0) {
         root->right = XoaTuAVL(root->right, tu);
-    } else {
-        if (root->left == NULL) {
+    } 
+	else {
+        if(root->left == NULL) {
             NODEWORD* temp = root->right;
             NODEVIDU* vd = root->info.first;
-            while (vd != NULL) {
+            while(vd != NULL) {
                 NODEVIDU* tempVd = vd;
                 vd = vd->next;
                 free(tempVd);
             }
             free(root);
             return temp;
-        } else if (root->right == NULL) {
+        } 
+		else if(root->right == NULL) {
             NODEWORD* temp = root->left;
             NODEVIDU* vd = root->info.first;
-            while (vd != NULL) {
+            while(vd != NULL) {
                 NODEVIDU* tempVd = vd;
                 vd = vd->next;
                 free(tempVd);
             }
             free(root);
             return temp;
-        } else {
+        } 
+		else {
             NODEWORD* minNode = TimNhoNhat(root->right);
             root->info.first = NULL;
             NODEVIDU* vd = minNode->info.first;
-            while (vd != NULL) {
+            while(vd != NULL) {
                 ChenVdVaoDauDs(&root->info.first, vd->info);
                 vd = vd->next;
             }
@@ -720,13 +757,13 @@ NODEWORD* XoaTuAVL(NODEWORD* root, const char* tu) {
             root->right = XoaTuAVL(root->right, minNode->info.tu);
         }
     }
-    if (root == NULL) return root;
+    if(root == NULL) return root;
     updateHeight(root);
     return BalanceNode(root);
 }
 
 void XoaTu(hashtable* tudien, NODEWORD** p) {
-    if (tudien == NULL || p == NULL || *p == NULL) return;
+    if(tudien == NULL || p == NULL || *p == NULL) return;
     clearScreen();
     int consoleWidth, consoleHeight;
     getConsoleSize(&consoleWidth, &consoleHeight);
@@ -744,15 +781,15 @@ void XoaTu(hashtable* tudien, NODEWORD** p) {
     tudien[index].root = XoaTuAVL(tudien[index].root, (*p)->info.tu);
 
     int len = strlen((*p)->info.tu);
-    if (len > MAX_LENGTH) len = MAX_LENGTH;
+    if(len > MAX_CHIEUDAI) len = MAX_CHIEUDAI;
     LENGTHNODE* prev = NULL;
     LENGTHNODE* curr = lengthLists[len];
-    while (curr != NULL && curr->word != *p) {
+    while(curr != NULL && curr->word != *p) {
         prev = curr;
         curr = curr->next;
     }
-    if (curr != NULL) {
-        if (prev != NULL) prev->next = curr->next;
+    if(curr != NULL) {
+        if(prev != NULL) prev->next = curr->next;
         else lengthLists[len] = curr->next;
         free(curr);
     }
@@ -763,7 +800,7 @@ void XoaTu(hashtable* tudien, NODEWORD** p) {
 }
 
 void SuaTu(NODEWORD* p) {
-    if (p == NULL) return;
+    if(p == NULL) return;
     clearScreen();
     int consoleWidth, consoleHeight;
     getConsoleSize(&consoleWidth, &consoleHeight);
@@ -776,23 +813,23 @@ void SuaTu(NODEWORD* p) {
 
     char temp[MAX_CHUOI];
     sprintf(temp, "Loại từ (%s): ", p->info.loai);
-    if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, 5)) return;
-    if (temp[0] != '\0') strncpy(p->info.loai, temp, MAX_CHUOI - 1);
+    if(!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, 5)) return;
+    if(temp[0] != '\0') strncpy(p->info.loai, temp, MAX_CHUOI - 1);
 
     sprintf(temp, "Phiên âm (%s): ", p->info.phienam);
-    if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, 6)) return;
-    if (temp[0] != '\0') strncpy(p->info.phienam, temp, MAX_CHUOI - 1);
+    if(!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, 6)) return;
+    if(temp[0] != '\0') strncpy(p->info.phienam, temp, MAX_CHUOI - 1);
 
     sprintf(temp, "Nghĩa (%s): ", p->info.nghia);
-    if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, 7)) return;
+    if(!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, 7)) return;
     if (temp[0] != '\0') strncpy(p->info.nghia, temp, MAX_CHUOI - 1);
 
     NODEVIDU* vd = p->info.first;
     int count = 1, y = 9;
-    while (vd != NULL && y < 18) {
+    while(vd != NULL && y < 18) {
         sprintf(temp, "Ví dụ %d (%s): ", count++, vd->info);
-        if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, y)) return;
-        if (temp[0] != '\0') strncpy(vd->info, temp, MAX_CHUOI - 1);
+        if(!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, y)) return;
+        if(temp[0] != '\0') strncpy(vd->info, temp, MAX_CHUOI - 1);
         vd = vd->next;
         y++;
     }
@@ -803,9 +840,9 @@ void SuaTu(NODEWORD* p) {
 }
 
 void ThemTuMoi(hashtable* tudien) {
-    if (tudien == NULL) return;
+    if(tudien == NULL) return;
     NODEWORD* p = (NODEWORD*)calloc(1, sizeof(NODEWORD));
-    if (p == NULL) {
+    if(p == NULL) {
         printf("Lỗi cấp phát bộ nhớ!\n");
         Sleep(1000);
         return;
@@ -824,13 +861,13 @@ void ThemTuMoi(hashtable* tudien) {
     gotoxy(5 + offsetX, 3 + offsetY); printf("0: Quay Lại");
 
     char temp[MAX_CHUOI];
-    if (!nhapChuoi("Nhập Từ: ", temp, MAX_CHUOI, offsetX, offsetY, 5) || temp[0] == '\0') {
+    if(!nhapChuoi("Nhập Từ: ", temp, MAX_CHUOI, offsetX, offsetY, 5) || temp[0] == '\0') {
         free(p);
         return;
     }
-    for (int i = 0; temp[i]; i++) temp[i] = tolower(temp[i]);
-    for (int i = 0; temp[i]; i++) {
-        if (!isalpha(temp[i])) {
+    for(int i = 0; temp[i]; i++) temp[i] = tolower(temp[i]);
+    for(int i = 0; temp[i]; i++) {
+        if(!isalpha(temp[i])) {
             gotoxy(5 + offsetX, 6 + offsetY); setColor(12, 0); printf("Từ chỉ được chứa chữ cái!");
             setColor(15, 0);
             Sleep(1000);
@@ -838,7 +875,7 @@ void ThemTuMoi(hashtable* tudien) {
             return;
         }
     }
-    if (TimKiem(tudien, temp)) {
+    if(TimKiem(tudien, temp)) {
         gotoxy(5 + offsetX, 6 + offsetY); setColor(12, 0); printf("Từ '%s' đã tồn tại !", temp);
         setColor(15, 0);
         Sleep(1000);
@@ -847,32 +884,32 @@ void ThemTuMoi(hashtable* tudien) {
     }
     strncpy(p->info.tu, temp, MAX_CHUOI - 1);
 
-    if (!nhapChuoi("Loại từ: ", temp, MAX_CHUOI, offsetX, offsetY, 7)) {
+    if(!nhapChuoi("Loại từ: ", temp, MAX_CHUOI, offsetX, offsetY, 7)) {
         free(p);
         return;
     }
     strncpy(p->info.loai, (temp[0] != '\0') ? temp : "Trống", MAX_CHUOI - 1);
 
-    if (!nhapChuoi("Phiên âm: ", temp, MAX_CHUOI, offsetX, offsetY, 8)) {
+    if(!nhapChuoi("Phiên âm: ", temp, MAX_CHUOI, offsetX, offsetY, 8)) {
         free(p);
         return;
     }
     strncpy(p->info.phienam, (temp[0] != '\0') ? temp : "Trống", MAX_CHUOI - 1);
 
-    if (!nhapChuoi("Nghĩa: ", temp, MAX_CHUOI, offsetX, offsetY, 9)) {
+    if(!nhapChuoi("Nghĩa: ", temp, MAX_CHUOI, offsetX, offsetY, 9)) {
         free(p);
         return;
     }
     strncpy(p->info.nghia, (temp[0] != '\0') ? temp : "Trống", MAX_CHUOI - 1);
 
     int count = 1, y = 11;
-    while (count <= 2) {
+    while(count <= 2) {
         sprintf(temp, "Ví dụ %d: ", count++);
-        if (!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, y)) {
+        if(!nhapChuoi(temp, temp, MAX_CHUOI, offsetX, offsetY, y)) {
             free(p);
             return;
         }
-        if (temp[0] != '\0') ChenVdVaoDauDs(&p->info.first, temp);
+        if(temp[0] != '\0') ChenVdVaoDauDs(&p->info.first, temp);
         y++;
     }
     int index = TapTuDien(p->info.tu);
@@ -889,23 +926,23 @@ void ThemTuMoi(hashtable* tudien) {
 }
 
 NODEWORD* ChonTuNgauNhien(hashtable* tudien, int doKho) {
-    if (tudien == NULL) return NULL;
+    if(tudien == NULL) return NULL;
     int minLen = (doKho == 1) ? 3 : 5;
     int maxLen = (doKho == 1) ? 4 : 8;
     int total = 0;
-    for (int len = minLen; len <= maxLen; len++) {
+    for(int len = minLen; len <= maxLen; len++) {
         LENGTHNODE* curr = lengthLists[len];
-        while (curr) {
+        while(curr != NULL) {
             total++;
             curr = curr->next;
         }
     }
-    if (total == 0) return NULL;
+    if(total == 0) return NULL;
     int idx = rand() % total;
-    for (int len = minLen; len <= maxLen; len++) {
+    for(int len = minLen; len <= maxLen; len++) {
         LENGTHNODE* curr = lengthLists[len];
-        while (curr) {
-            if (idx == 0) return curr->word;
+        while(curr != NULL) {
+            if(idx == 0) return curr->word;
             idx--;
             curr = curr->next;
         }
@@ -914,34 +951,34 @@ NODEWORD* ChonTuNgauNhien(hashtable* tudien, int doKho) {
 }
 
 void TaoTuDoChu(const char* tu, char* tuDoChu) {
-    if (tu == NULL || tuDoChu == NULL) return;
+    if(tu == NULL || tuDoChu == NULL) return;
     strcpy(tuDoChu, tu);
     int len = strlen(tu);
-    if (len <= 2) return;
+    if(len <= 2) return;
 
     int soKyTuThayThe = len / 2;
-    if (soKyTuThayThe < 1) soKyTuThayThe = 1;
+    if(soKyTuThayThe < 1) soKyTuThayThe = 1;
 
-    for (int i = 0; i < soKyTuThayThe; i++) {
+    for(int i = 0; i < soKyTuThayThe; i++) {
         int viTri;
         do {
             viTri = rand() % len;
-        } while (tuDoChu[viTri] == '_');
+        } while(tuDoChu[viTri] == '_');
         tuDoChu[viTri] = '_';
     }
 }
 
 int GoiYKyTu(const char* tuGoc, char* tuDoChu, int len) {
-    if (tuGoc == NULL || tuDoChu == NULL || len <= 0) return 0;
+    if(tuGoc == NULL || tuDoChu == NULL || len <= 0) return 0;
     int hiddenCount = 0;
     int hiddenPositions[MAX_CHUOI];
 
-    for (int i = 0; i < len; i++) {
-        if (tuDoChu[i] == '_') {
+    for(int i = 0; i < len; i++) {
+        if(tuDoChu[i] == '_') {
             hiddenPositions[hiddenCount++] = i;
         }
     }
-    if (hiddenCount == 0) return 0;
+    if(hiddenCount == 0) return 0;
 
     int idx = rand() % hiddenCount;
     int pos = hiddenPositions[idx];
@@ -951,7 +988,7 @@ int GoiYKyTu(const char* tuGoc, char* tuDoChu, int len) {
 
 
 void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
-    if (tudien == NULL || diemSo == NULL) return;
+    if(tudien == NULL || diemSo == NULL) return;
     int consoleWidth, consoleHeight;
     getConsoleSize(&consoleWidth, &consoleHeight);
     int offsetX = (consoleWidth - 60) / 2;
@@ -963,15 +1000,15 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
     gotoxy(5 + offsetX, 4 + offsetY); printf("  0: Quay Lại");
     gotoxy(5 + offsetX, 6 + offsetY); printf("  Chọn độ khó: 1 (Dễ) | 2 (Khó): ");
     int doKho = _getch() - '0';
-    if (doKho != 1 && doKho != 2) return;
+    if(doKho != 1 && doKho != 2) return;
 
     *diemSo = 0;
     int soLanDoanSaiTong = 0;
     int gameOver = 0;
 
-    while (!gameOver) {
+    while(!gameOver) {
         NODEWORD* tuGoc = ChonTuNgauNhien(tudien, doKho);
-        if (tuGoc == NULL) {
+        if(tuGoc == NULL) {
             gotoxy(5 + offsetX, 8 + offsetY); setColor(12, 0); printf("  Không có từ phù hợp !");
             setColor(15, 0);
             gotoxy(5 + offsetX, 10 + offsetY); printf("  Nhấn phím bất kỳ để quay lại...");
@@ -986,7 +1023,7 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
         int len = strlen(tuGoc->info.tu);
         int soLanGoiY = 0;
         int hiddenCount = 0;
-        for (int i = 0; i < len; i++) if (tuDoChu[i] == '_') hiddenCount++;
+        for(int i = 0; i < len; i++) if (tuDoChu[i] == '_') hiddenCount++;
         int roundOver = 0;
 
         clearScreen();
@@ -998,44 +1035,45 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
         gotoxy(5 + offsetX, 9 + offsetY); printf("  (1: Gợi ý | Backspace: Xóa | 0: Kết Thúc)");
         gotoxy(5 + offsetX, 11 + offsetY); printf("  %-40s", "");
 
-        while (!roundOver && !gameOver) {
+        while(!roundOver && !gameOver) {
             char KyTuNguoiChoi = _getch();
 
-            if (KyTuNguoiChoi == '0') {
+            if(KyTuNguoiChoi == '0') {
                 gameOver = 1;
                 break;
             }
 
-            if (KyTuNguoiChoi == 8) { // Backspace
+            if(KyTuNguoiChoi == 8) { // Backspace
                 int deleted = 0;
-                for (int i = len - 1; i >= 0 && !deleted; i--) {
-                    if (tuDoChu[i] != tuTam[i]) {
+                for(int i = len - 1; i >= 0 && !deleted; i--) {
+                    if(tuDoChu[i] != tuTam[i]) {
                         tuDoChu[i] = '_';
                         hiddenCount++;
                         deleted = 1;
                     }
                 }
-                if (!deleted) {
+                if(!deleted) {
                     gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Không có ký tự người chơi để xóa !");
                     setColor(15, 0);
                     Sleep(1000);
                     gotoxy(5 + offsetX, 11 + offsetY); printf("  %-40s", "");
-                } else {
+                } 
+				else {
                     gotoxy(5 + offsetX, 7 + offsetY); printf("  Từ: %s%-40s", tuDoChu, "");
                 }
                 gotoxy(5 + offsetX, 9 + offsetY); printf("  (1: Gợi ý | Backspace: Xóa | 0: Kết Thúc)");
                 continue;
             }
 
-            if (KyTuNguoiChoi == '1') {
-                if (soLanGoiY >= 1) {
+            if(KyTuNguoiChoi == '1') {
+                if(soLanGoiY >= 1) {
                     gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Bạn đã hết lượt gợi ý !");
                     setColor(15, 0);
                     Sleep(1000);
                     gotoxy(5 + offsetX, 11 + offsetY); printf("  %-40s", "");
                     continue;
                 }
-                if (GoiYKyTu(tuGoc->info.tu, tuDoChu, len) == 0) {
+                if(GoiYKyTu(tuGoc->info.tu, tuDoChu, len) == 0) {
                     gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Không còn chữ cái để gợi ý !");
                     setColor(15, 0);
                     Sleep(1000);
@@ -1054,8 +1092,8 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
                 continue;
             }
 
-            if (KyTuNguoiChoi == 13) { // Enter
-                if (strchr(tuDoChu, '_') != NULL) {
+            if(KyTuNguoiChoi == 13) { // Enter
+                if(strchr(tuDoChu, '_') != NULL) {
                     gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Vui lòng điền hết các ký tự!");
                     setColor(15, 0);
                     Sleep(1000);
@@ -1063,12 +1101,13 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
                     continue;
                 }
                 NODEWORD* p = NULL;
-                if (strcmp(tuDoChu, tuGoc->info.tu) == 0) {
+                if(strcmp(tuDoChu, tuGoc->info.tu) == 0) {
                     p = tuGoc;
-                } else {
+                } 
+				else {
                     p = TimKiem(tudien, tuDoChu);
                 }
-                if (p != NULL && strcmp(tuDoChu, p->info.tu) == 0) {
+                if(p != NULL && strcmp(tuDoChu, p->info.tu) == 0) {
                     *diemSo += (doKho == 1 ? 10 : 20);
                     gotoxy(5 + offsetX, 11 + offsetY); setColor(10, 0); printf("  Chính xác! Từ '%s' thích hợp!", p->info.tu);
                     gotoxy(5 + offsetX, 12 + offsetY); printf("  + %d điểm", (doKho == 1 ? 10 : 20));
@@ -1079,9 +1118,10 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
                     _getch();
                     roundOver = 1;
                     continue;
-                } else {
+                } 
+				else {
                     soLanDoanSaiTong++;
-                    if (soLanDoanSaiTong >= MAX_DOAN_SAI) {
+                    if(soLanDoanSaiTong >= MAX_DOAN_SAI) {
                         gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Bạn đã thua! Từ đúng là: %s", tuGoc->info.tu);
                         Sleep(1000);
                         setColor(15, 0);
@@ -1090,7 +1130,8 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
                         _getch();
                         gameOver = 1;
                         continue;
-                    } else {
+                    } 
+					else {
                         gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Sai rồi! Từ đúng là: %s", tuGoc->info.tu);
                         Sleep(1000);
                         setColor(15, 0);
@@ -1103,7 +1144,7 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
                 }
             }
 
-            if (!isalpha(KyTuNguoiChoi)) {
+            if(!isalpha(KyTuNguoiChoi)) {
                 gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Vui lòng nhập chữ cái !");
                 setColor(15, 0);
                 Sleep(1000);
@@ -1111,7 +1152,7 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
                 continue;
             }
 
-            if (hiddenCount == 0) {
+            if(hiddenCount == 0) {
                 gotoxy(5 + offsetX, 11 + offsetY); setColor(12, 0); printf("  Đã đủ ký tự !");
                 setColor(15, 0);
                 Sleep(500);
@@ -1120,8 +1161,8 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
             }
 
             int filled = 0;
-			for (int i = 0; i < len && !filled; i++) {
-    			if (tuDoChu[i] == '_') {
+			for(int i = 0; i < len && !filled; i++) {
+    			if(tuDoChu[i] == '_') {
         			tuDoChu[i] = tolower(KyTuNguoiChoi);
         			hiddenCount--;
         			filled = 1;
@@ -1138,13 +1179,16 @@ void ChoiTroChoiDoChu(hashtable* tudien, int* diemSo) {
     gotoxy(5 + offsetX, 5 + offsetY); printf("  Điểm cuối cùng: %d", *diemSo);
     gotoxy(5 + offsetX, 7 + offsetY); printf("  Xếp hạng: ");
 
-    if (*diemSo <= 50) {
+    if(*diemSo <= 50) {
         setColor(12, 0); printf("Beginner");
-    } else if (*diemSo <= 100) {
+    } 
+	else if(*diemSo <= 100) {
         setColor(14, 0); printf("Intermediate");
-    } else if (*diemSo <= 200) {
+    } 
+	else if(*diemSo <= 200) {
         setColor(10, 0); printf("Advanced");
-    } else {
+    } 
+	else {
         setColor(11, 0); printf("Expert");
     }
     setColor(15, 0);
@@ -1164,7 +1208,7 @@ void XemLichSuTraCuu() {
     veKhung(1, 1, 40, MAX_LICH_SU + 5, 14, offsetX, offsetY);
     gotoxy(12 + offsetX, 2 + offsetY); setColor(14, 0); printf("LỊCH SỬ TÌM KIẾM"); setColor(15, 0);
 
-    if (SoLuongLichSu == 0) {
+    if(SoLuongLichSu == 0) {
         gotoxy(5 + offsetX, 5 + offsetY); printf("Lịch sử trống.");
         gotoxy(5 + offsetX, MAX_LICH_SU + 3 + offsetY); printf("Nhấn phím bất kỳ để tiếp tục...");
         _getch();
@@ -1173,7 +1217,7 @@ void XemLichSuTraCuu() {
 
     NODELICHSU* current = LichSuHead;
     int index = 1;
-    while (current != NULL && index <= MAX_LICH_SU) {
+    while(current != NULL && index <= MAX_LICH_SU) {
         gotoxy(5 + offsetX, 3 + index + offsetY);
         printf("%2d. %.*s", index, 30, current->tu);
         current = current->next;
@@ -1186,7 +1230,7 @@ void XemLichSuTraCuu() {
 }
 
 void XuLyTuDien(hashtable* tudien) {
-    if (tudien == NULL) return;
+    if(tudien == NULL) return;
     NODEWORD* tuHienTai = NULL;
     char input[MAX_CHUOI] = "";
     int pos = 0;
@@ -1195,14 +1239,17 @@ void XuLyTuDien(hashtable* tudien) {
     getConsoleSize(&consoleWidth, &consoleHeight);
     int offsetX = (consoleWidth - 70) / 2;
     int offsetY = (consoleHeight - (HIEN_THI_TOI_DA + 15)) / 2;
+    
+    VeGiaoDienBatDau();
+    int c = _getch();
 
     VeGiaoDienChinh(tudien, input, pos, 1);
-    while (1) {
+    while(1) {
         tuHienTai = CapNhatDanhSachTu(tudien, input, pos, offsetX, offsetY);
         int soLuongTuHienThi = DemSoTuHienThi(tudien, input);
         int keyCode = _getch();
 
-        switch (keyCode) {
+        switch(keyCode) {
         case 8: // Backspace
             if (strlen(input) > 0) {
                 input[strlen(input) - 1] = '\0';
@@ -1216,9 +1263,9 @@ void XuLyTuDien(hashtable* tudien) {
             VeGiaoDienChinh(tudien, input, pos, 1);
             break;
         case 13: // Enter
-            if (tuHienTai) {
+            if(tuHienTai != NULL) {
                 VeGiaoDienChiTietTu(tuHienTai);
-                while (1) {
+                while(1) {
                     int k = _getch();
                     if (k == '0') break;
                     if (k == 8) {
@@ -1242,10 +1289,10 @@ void XuLyTuDien(hashtable* tudien) {
             gotoxy(2 + offsetX, 24 + offsetY); setColor(10, 0);
             printf("%s", "Đã lưu thành công!"); setColor(15, 0);
             return;
-        case 224: // Arrow keys
+        case 224: // Phím mũi tên
             switch (_getch()) {
-            case 72: if (pos > 0) pos--; break; // Up
-            case 80: if (pos < soLuongTuHienThi - 1 && tuHienTai != NULL) pos++; break; // Down
+            case 72: if(pos > 0) pos--; break; // Mũi tên lên
+            case 80: if(pos < soLuongTuHienThi - 1 && tuHienTai != NULL) pos++; break; // Mũi tên xuống
             }
             break;
         case '4':
@@ -1257,7 +1304,7 @@ void XuLyTuDien(hashtable* tudien) {
             VeGiaoDienChinh(tudien, input, pos, 1);
             break;
         default:
-            if (isalpha(keyCode) && strlen(input) < CR_KTK - 10) {
+            if(isalpha(keyCode) && strlen(input) < CR_KTK - 10) {
                 char c = tolower(keyCode);
                 strncat(input, &c, 1);
                 pos = 0;
@@ -1271,11 +1318,11 @@ void XuLyTuDien(hashtable* tudien) {
 }
 
 void GiaiPhongAVL(NODEWORD* root) {
-    if (root == NULL) return;
+    if(root == NULL) return;
     GiaiPhongAVL(root->left);
     GiaiPhongAVL(root->right);
     NODEVIDU* vd = root->info.first;
-    while (vd != NULL) {
+    while(vd != NULL) {
         NODEVIDU* temp = vd;
         vd = vd->next;
         free(temp);
@@ -1285,13 +1332,13 @@ void GiaiPhongAVL(NODEWORD* root) {
 }
 
 void CleanUp(hashtable* tudien) {
-    if (tudien == NULL) return;
-    for (int i = 0; i < 26; i++) {
+    if(tudien == NULL) return;
+    for(int i = 0; i < 26; i++) {
         GiaiPhongAVL(tudien[i].root);
         tudien[i].root = NULL;
     }
     NODELICHSU* current = LichSuHead;
-    while (current != NULL) {
+    while(current != NULL) {
         NODELICHSU* temp = current;
         current = current->next;
         free(temp);
@@ -1299,9 +1346,9 @@ void CleanUp(hashtable* tudien) {
     LichSuHead = NULL;
     SoLuongLichSu = 0;
 
-    for (int i = 0; i <= MAX_LENGTH; i++) {
+    for(int i = 0; i <= MAX_CHIEUDAI; i++) {
         LENGTHNODE* curr = lengthLists[i];
-        while (curr != NULL) {
+        while(curr != NULL) {
             LENGTHNODE* temp = curr;
             curr = curr->next;
             temp->word = NULL;
